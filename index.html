@@ -1,0 +1,3818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NISBA Technical Architecture Document</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #1e3a8a;
+            --secondary-blue: #3b82f6;
+            --accent-gold: #f59e0b;
+            --light-blue: #eff6ff;
+            --dark-blue: #1e1b4b;
+            --warm-gray: #374151;
+            --light-gray: #9ca3af;
+            --white: #ffffff;
+            --success-green: #10b981;
+            --gradient: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            --shadow: 0 10px 30px rgba(30, 58, 138, 0.1);
+            --shadow-hover: 0 15px 40px rgba(30, 58, 138, 0.2);
+            --tech-purple: #7c3aed;
+            --tech-cyan: #06b6d4;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--warm-gray);
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-nav {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 0.5rem;
+        }
+
+        .section-btn {
+            padding: 0.5rem 1rem;
+            background: var(--light-blue);
+            color: var(--primary-blue);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-size: 0.8rem;
+        }
+
+        .section-btn:hover, .section-btn.active {
+            background: var(--primary-blue);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .tech-badge {
+            background: var(--tech-purple);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Sidebar */
+        .layout {
+            display: flex;
+            margin-top: 80px;
+            min-height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: var(--white);
+            box-shadow: var(--shadow);
+            position: fixed;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            padding: 2rem 0;
+            z-index: 100;
+        }
+
+        .sidebar-content {
+            padding: 0 1.5rem;
+        }
+
+        .toc-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toc-list {
+            list-style: none;
+        }
+
+        .toc-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: var(--warm-gray);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .toc-link:hover {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+            border-left-color: var(--primary-blue);
+        }
+
+        .toc-link.active {
+            background: var(--primary-blue);
+            color: white;
+            border-left-color: var(--accent-gold);
+        }
+
+        .toc-subsection {
+            margin-left: 1rem;
+            font-size: 0.9rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 300px;
+            padding: 2rem;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            color: var(--light-gray);
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Content Cards */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .content-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .content-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+        }
+
+        .card-icon {
+            background: var(--gradient);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--warm-gray);
+        }
+
+        .tech-stack-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .tech-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-blue);
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Code Blocks */
+        .code-container {
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin: 2rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: var(--dark-blue);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .code-title {
+            font-weight: 600;
+        }
+
+        .copy-btn {
+            background: var(--accent-gold);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+
+        .code-content {
+            padding: 0;
+            background: #2d3748;
+        }
+
+        .code-content pre {
+            margin: 0;
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+
+        /* Architecture Diagrams */
+        .architecture-diagram {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .diagram-container {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 10px;
+            white-space: pre-wrap;
+            text-align: center;
+            overflow-x: auto;
+            line-height: 1.4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .diagram-container pre {
+            margin: 0;
+            text-align: left;
+            display: inline-block;
+        }
+
+        /* Database Schema */
+        .schema-table {
+            background: var(--white);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin: 1rem 0;
+        }
+
+        .schema-header {
+            background: var(--primary-blue);
+            color: white;
+            padding: 1rem;
+            font-weight: bold;
+        }
+
+        .schema-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 2fr;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            align-items: center;
+        }
+
+        .schema-row:hover {
+            background: var(--light-blue);
+        }
+
+        /* Metrics and Stats */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .metric-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--light-gray);
+            font-size: 0.9rem;
+        }
+
+        /* Interactive Elements */
+        .interactive-section {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin: 2rem 0;
+        }
+
+        .toggle-section {
+            border: 2px solid var(--light-blue);
+            border-radius: 10px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .toggle-header {
+            background: var(--light-blue);
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-header:hover {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .toggle-content {
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .toggle-content.active {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Risk Matrix */
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .risk-item {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid;
+        }
+
+        .risk-low { border-left-color: var(--success-green); }
+        .risk-medium { border-left-color: var(--accent-gold); }
+        .risk-high { border-left-color: #ef4444; }
+        .risk-critical { border-left-color: #7c2d12; }
+
+        /* Progress Indicators */
+        .progress-section {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin: 2rem 0;
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 250px;
+            }
+            .main-content {
+                margin-left: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .risk-matrix {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--primary-blue);
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-blue);
+            border-top: 4px solid var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Search Functionality */
+        .search-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            background: #f9fafb;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-blue);
+            background: white;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--light-gray);
+        }
+
+        /* Enhanced Tables */
+        .data-table {
+            width: 100%;
+            background: var(--white);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin: 2rem 0;
+        }
+
+        .table-header {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .table-row {
+            display: grid;
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            align-items: center;
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .table-row:hover {
+            background: var(--light-blue);
+        }
+
+        /* Scroll behavior improvements */
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 100px; /* Account for fixed header */
+        }
+
+        /* Ensure sections have proper positioning for scroll targeting */
+        .section {
+            scroll-margin-top: 100px;
+        }
+
+        .section-header {
+            scroll-margin-top: 80px;
+        }
+
+        /* Print Styles */
+        @media print {
+            .sidebar, .nav, .mobile-menu-btn {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .section {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">NISBA</div>
+            <div class="nav-controls">
+                <div class="tech-badge">Technical Architecture</div>
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-content">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Search documentation..." id="searchInput">
+                </div>
+                
+                <h3 class="toc-title">
+                    <i class="fas fa-list"></i>
+                    Table of Contents
+                </h3>
+                <ul class="toc-list">
+                    <li class="toc-item">
+                        <a href="#" class="toc-link active" onclick="showSection('overview')">
+                            <i class="fas fa-info-circle"></i> System Overview
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('principles')">
+                            <i class="fas fa-lightbulb"></i> Architecture Principles
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('stack')">
+                            <i class="fas fa-layer-group"></i> Technology Stack
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('architecture')">
+                            <i class="fas fa-sitemap"></i> System Architecture
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('database')">
+                            <i class="fas fa-database"></i> Database Design
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('api')">
+                            <i class="fas fa-plug"></i> API Design
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('security')">
+                            <i class="fas fa-shield-alt"></i> Security & Compliance
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('scalability')">
+                            <i class="fas fa-expand-arrows-alt"></i> Scalability & Performance
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('deployment')">
+                            <i class="fas fa-rocket"></i> Development & Deployment
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('monitoring')">
+                            <i class="fas fa-chart-line"></i> Monitoring & Maintenance
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('compliance')">
+                            <i class="fas fa-balance-scale"></i> Compliance & Governance
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('risk')">
+                            <i class="fas fa-exclamation-triangle"></i> Risk Analysis
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('growth')">
+                            <i class="fas fa-rocket"></i> Growth Strategy
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('best-practices')">
+                            <i class="fas fa-shield-alt"></i> Security Best Practices
+                        </a>
+                    </li>
+                    <li class="toc-item">
+                        <a href="#" class="toc-link" onclick="showSection('conclusion')">
+                            <i class="fas fa-flag-checkered"></i> Conclusion
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- System Overview Section -->
+            <section id="overview" class="section active">
+                <div class="section-header">
+                    <h1 class="section-title">System Overview</h1>
+                    <p class="section-subtitle">Comprehensive system design for NISBA's Islamic finance education platform</p>
+                    <div class="section-meta">
+                        <span class="meta-item">Version 1.0</span>
+                        <span class="meta-item">January 2025</span>
+                        <span class="meta-item">100K+ Users Capacity</span>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <h3 class="card-title">Platform Purpose</h3>
+                        </div>
+                        <p>NISBA is a comprehensive Islamic finance education and coaching platform designed to serve individual users, corporate clients, and coaching professionals through integrated web and mobile applications.</p>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-cubes"></i>
+                            </div>
+                            <h3 class="card-title">Core Modules</h3>
+                        </div>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin: 0.5rem 0;"><i class="fas fa-user" style="color: var(--primary-blue); margin-right: 0.5rem;"></i>User Management System</li>
+                            <li style="margin: 0.5rem 0;"><i class="fas fa-graduation-cap" style="color: var(--primary-blue); margin-right: 0.5rem;"></i>Educational Content Platform</li>
+                            <li style="margin: 0.5rem 0;"><i class="fas fa-chart-line" style="color: var(--primary-blue); margin-right: 0.5rem;"></i>Investment Simulator</li>
+                            <li style="margin: 0.5rem 0;"><i class="fas fa-filter" style="color: var(--primary-blue); margin-right: 0.5rem;"></i>Halal Screening Engine</li>
+                            <li style="margin: 0.5rem 0;"><i class="fas fa-chalkboard-teacher" style="color: var(--primary-blue); margin-right: 0.5rem;"></i>Coaching Management</li>
+                            <li style="margin: 0.5rem 0;"><i class="fas fa-building" style="color: var(--primary-blue); margin-right: 0.5rem;"></i>Corporate Portal</li>
+                            <li style="margin: 0.5rem 0;"><i class="fas fa-credit-card" style="color: var(--primary-blue); margin-right: 0.5rem;"></i>Payment & Billing System</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">100K+</div>
+                        <div class="metric-label">Concurrent Users</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">&lt;2s</div>
+                        <div class="metric-label">Page Load Time</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">99.9%</div>
+                        <div class="metric-label">Uptime Target</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">SOC 2</div>
+                        <div class="metric-label">Compliance</div>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1rem;">Technical Requirements</h3>
+                    
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-expand-arrows-alt"></i> Scalability Requirements</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li>Support 100K+ concurrent users</li>
+                                <li>Handle 1M+ API requests per day</li>
+                                <li>Auto-scaling capabilities</li>
+                                <li>Global CDN distribution</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-tachometer-alt"></i> Performance Requirements</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li>&lt;2s page load times</li>
+                                <li>99.9% uptime guarantee</li>
+                                <li>&lt;500ms API response time</li>
+                                <li>Real-time data synchronization</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-shield-alt"></i> Security Requirements</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li>SOC 2 compliance</li>
+                                <li>End-to-end encryption</li>
+                                <li>GDPR compliance</li>
+                                <li>Multi-factor authentication</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security Best Practices Section -->
+            <section id="best-practices" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Security Best Practices</h1>
+                    <p class="section-subtitle">Advanced security implementation guidelines and development standards</p>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Development Security</h3>
+                    
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-code"></i> Secure Coding Standards</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <div class="code-container">
+                                <div class="code-header">
+                                    <span class="code-title">Input Validation Example</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <div class="code-content">
+                                    <pre><code class="language-javascript">// Input validation example
+const validateUserInput = {
+  registration: {
+    email: joi.string().email().required(),
+    password: joi.string().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/).required(),
+    firstName: joi.string().min(2).max(50).pattern(/^[a-zA-Z\s]+$/).required(),
+    lastName: joi.string().min(2).max(50).pattern(/^[a-zA-Z\s]+$/).required()
+  },
+  trading: {
+    symbol: joi.string().alphanum().min(1).max(10).required(),
+    quantity: joi.number().integer().min(1).max(10000).required(),
+    orderType: joi.string().valid('buy', 'sell').required()
+  }
+};
+
+// SQL injection prevention
+const secureQueries = {
+  // ❌ Vulnerable to SQL injection
+  badQuery: `SELECT * FROM users WHERE email = '${email}'`,
+  
+  // ✅ Safe parameterized query
+  goodQuery: 'SELECT * FROM users WHERE email = $1',
+  parameters: [email]
+};</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-key"></i> Secrets Management</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <div class="code-container">
+                                <div class="code-header">
+                                    <span class="code-title">AWS Secrets Manager Integration</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <div class="code-content">
+                                    <pre><code class="language-javascript">// AWS Secrets Manager integration
+const secretsManager = {
+  secrets: {
+    database: 'nisba/database/credentials',
+    jwt: 'nisba/auth/jwt-secret',
+    encryption: 'nisba/encryption/keys',
+    external_apis: 'nisba/apis/keys'
+  },
+  
+  rotation: {
+    database: 'Automatic 30-day rotation',
+    jwt: 'Manual rotation on security events',
+    api_keys: 'Quarterly rotation'
+  },
+  
+  access: {
+    applications: 'IAM roles with least privilege',
+    developers: 'Temporary access via AWS CLI',
+    ci_cd: 'Service accounts with limited scope'
+  }
+};</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-network-wired"></i>
+                            </div>
+                            <h3 class="card-title">Network Security</h3>
+                        </div>
+                        <ul>
+                            <li><strong>VPC Configuration:</strong> Isolated network environments</li>
+                            <li><strong>Security Groups:</strong> Strict firewall rules</li>
+                            <li><strong>WAF Protection:</strong> Web application firewall</li>
+                            <li><strong>DDoS Protection:</strong> AWS Shield Advanced</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <h3 class="card-title">Container Security</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Image Scanning:</strong> Vulnerability scanning for Docker images</li>
+                            <li><strong>Secrets Management:</strong> AWS Secrets Manager integration</li>
+                            <li><strong>Runtime Security:</strong> Container runtime monitoring</li>
+                            <li><strong>Policy Enforcement:</strong> Open Policy Agent (OPA)</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-docker"></i>
+                            </div>
+                            <h3 class="card-title">Secure Docker Practices</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Multi-stage Builds:</strong> Minimize attack surface</li>
+                            <li><strong>Non-root Users:</strong> Run containers as non-privileged users</li>
+                            <li><strong>Image Signing:</strong> Verify image integrity</li>
+                            <li><strong>Regular Updates:</strong> Keep base images current</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-shield-virus"></i>
+                            </div>
+                            <h3 class="card-title">Threat Detection</h3>
+                        </div>
+                        <ul>
+                            <li><strong>SIEM Integration:</strong> Real-time threat monitoring</li>
+                            <li><strong>Anomaly Detection:</strong> ML-powered unusual activity detection</li>
+                            <li><strong>Incident Response:</strong> Automated response protocols</li>
+                            <li><strong>Forensics:</strong> Detailed audit trails</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">Secure Docker Configuration</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-dockerfile"># Multi-stage secure Dockerfile
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+FROM node:18-alpine AS runtime
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+# Install security updates
+RUN apk update && apk upgrade && apk add --no-cache dumb-init
+# Set up application
+WORKDIR /app
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --chown=nextjs:nodejs . .
+# Switch to non-root user
+USER nextjs
+# Use dumb-init for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "server.js"]</code></pre>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Kubernetes Network Policies</h3>
+                    
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span class="code-title">Network Policy Configuration</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nisba-api-policy
+  namespace: nisba
+spec:
+  podSelector:
+    matchLabels:
+      app: nisba-api
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 3000
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: database
+    ports:
+    - protocol: TCP
+      port: 5432</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Conclusion Section -->
+            <section id="conclusion" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Conclusion</h1>
+                    <p class="section-subtitle">Summary and strategic positioning for NISBA's technical architecture</p>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Architecture Summary</h3>
+                    <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem;">
+                        This technical architecture document provides a comprehensive blueprint for building a scalable, secure, and compliant Islamic finance education platform. The architecture is designed to serve as the foundation for NISBA's mission to democratize halal investing through education, technology, and personalized coaching.
+                    </p>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <h3 class="card-title">Key Strengths</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Scalability:</strong> Microservices architecture supports horizontal scaling</li>
+                            <li><strong>Security:</strong> Multiple layers of security controls and compliance</li>
+                            <li><strong>Performance:</strong> Optimized for fast response times and high availability</li>
+                            <li><strong>Maintainability:</strong> Clean code practices and comprehensive monitoring</li>
+                            <li><strong>Compliance:</strong> Built-in support for financial and data protection regulations</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-road"></i>
+                            </div>
+                            <h3 class="card-title">Implementation Roadmap</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Phase 1</strong> (Months 1-3): Core platform development and basic features</li>
+                            <li><strong>Phase 2</strong> (Months 4-6): Advanced features and mobile applications</li>
+                            <li><strong>Phase 3</strong> (Months 7-9): Enterprise features and international expansion</li>
+                            <li><strong>Phase 4</strong> (Months 10-12): AI/ML capabilities and advanced analytics</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h3 class="card-title">Success Metrics</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Technical:</strong> 99.9% uptime, &lt;2s response times, zero security incidents</li>
+                            <li><strong>Business:</strong> Support 100K+ users, process 1M+ API requests/day</li>
+                            <li><strong>Compliance:</strong> Pass all security audits and regulatory requirements</li>
+                            <li><strong>Growth:</strong> Global expansion to 10+ countries by 2027</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <h3 class="card-title">Innovation Pipeline</h3>
+                        </div>
+                        <ul>
+                            <li><strong>AI Integration:</strong> Personalized learning and investment recommendations</li>
+                            <li><strong>Blockchain:</strong> Transparent Shariah compliance verification</li>
+                            <li><strong>VR/AR:</strong> Immersive educational experiences</li>
+                            <li><strong>Global Platform:</strong> Multi-region, multi-language support</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="architecture-diagram">
+                    <h3 style="margin-bottom: 1rem;">Strategic Technology Positioning</h3>
+                    <div class="diagram-container">
+┌─────────────────────────────────────────────────────────────┐
+│                    NISBA Technology Leadership               │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  🎯 Market Position: Technology Leader in Islamic Finance   │
+│                                                             │
+│  🔧 Core Strengths:                                         │
+│   • First comprehensive Islamic finance education platform  │
+│   • AI-powered Shariah compliance screening                │
+│   • Scholar-validated educational content                  │
+│   • Scalable B2C and B2B solutions                        │
+│                                                             │
+│  🚀 Growth Trajectory:                                      │
+│   • 2025: UK Market Leadership (10K+ users)                │
+│   • 2026: European Expansion (50K+ users)                  │
+│   • 2027: Global Platform (100K+ users)                    │
+│                                                             │
+│  💡 Innovation Pipeline:                                    │
+│   • Advanced AI/ML capabilities                            │
+│   • Blockchain integration                                 │
+│   • VR/AR educational experiences                          │
+│   • Multi-region compliance                                │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Final Recommendations</h3>
+                    
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-rocket"></i> Next Steps</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ol style="margin-left: 1rem;">
+                                <li><strong>Immediate (Q1 2025):</strong> Complete Phase 1 development and beta launch</li>
+                                <li><strong>Short-term (Q2-Q3 2025):</strong> Mobile app launch and advanced features</li>
+                                <li><strong>Medium-term (Q4 2025):</strong> International expansion preparation</li>
+                                <li><strong>Long-term (2026+):</strong> AI features and global market leadership</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-shield-alt"></i> Critical Success Factors</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li><strong>User Adoption:</strong> Achieving target user growth milestones</li>
+                                <li><strong>Product Quality:</strong> Maintaining high performance and reliability</li>
+                                <li><strong>Content Excellence:</strong> Scholar-validated, high-quality educational materials</li>
+                                <li><strong>Technology Leadership:</strong> Staying ahead with innovative features</li>
+                                <li><strong>Regulatory Compliance:</strong> Maintaining all necessary approvals</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">Technology</div>
+                        <div class="metric-label">Leadership Position</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">Global</div>
+                        <div class="metric-label">Expansion Ready</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">Scholar</div>
+                        <div class="metric-label">Validated Platform</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">Future</div>
+                        <div class="metric-label">Proof Architecture</div>
+                    </div>
+                </div>
+
+                <div class="interactive-section" style="background: var(--gradient); color: white; text-align: center; padding: 3rem;">
+                    <h3 style="color: white; margin-bottom: 1rem;">Document Information</h3>
+                    <p style="font-size: 1.1rem; margin-bottom: 1rem;">
+                        <strong>NISBA Technical Architecture Document</strong><br>
+                        Version 1.0 | January 2025<br>
+                        Prepared by: NISBA Technical Team
+                    </p>
+                    <p style="font-size: 0.9rem; opacity: 0.9;">
+                        This architecture serves as our north star, balancing ambitious growth targets with practical execution milestones. Regular quarterly reviews will ensure we adapt to market feedback while maintaining our technical excellence and Islamic values.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Risk Analysis Section -->
+            <section id="risk" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Risk Analysis</h1>
+                    <p class="section-subtitle">Comprehensive risk assessment and mitigation strategies</p>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Business Risks</h3>
+                    
+                    <div class="risk-matrix">
+                        <div class="risk-item risk-medium">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <h4 class="card-title">Market Risks</h4>
+                            </div>
+                            <ul>
+                                <li><strong>Competition:</strong> Large financial institutions entering the space</li>
+                                <li><strong>Economic Downturn:</strong> Reduced spending on financial education</li>
+                                <li><strong>Mitigation:</strong> Build strong moats through technology and scholar relationships</li>
+                            </ul>
+                        </div>
+
+                        <div class="risk-item risk-high">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-server"></i>
+                                </div>
+                                <h4 class="card-title">Technical Risks</h4>
+                            </div>
+                            <ul>
+                                <li><strong>Platform Scalability:</strong> System failures during rapid growth</li>
+                                <li><strong>Data Security:</strong> Breaches affecting user trust and compliance</li>
+                                <li><strong>Mitigation:</strong> Cloud-native architecture with auto-scaling capabilities</li>
+                            </ul>
+                        </div>
+
+                        <div class="risk-item risk-medium">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-balance-scale"></i>
+                                </div>
+                                <h4 class="card-title">Regulatory Risks</h4>
+                            </div>
+                            <ul>
+                                <li><strong>Financial Services Regulation:</strong> Potential licensing requirements</li>
+                                <li><strong>Data Protection:</strong> GDPR and UK data protection compliance</li>
+                                <li><strong>Mitigation:</strong> Legal counsel monitoring, focus on education vs. advice</li>
+                            </ul>
+                        </div>
+
+                        <div class="risk-item risk-low">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-cogs"></i>
+                                </div>
+                                <h4 class="card-title">Operational Risks</h4>
+                            </div>
+                            <ul>
+                                <li><strong>Key Person Dependency:</strong> Reliance on founders and key scholars</li>
+                                <li><strong>Coach Quality:</strong> Inconsistent coaching delivery</li>
+                                <li><strong>Mitigation:</strong> Document processes, build strong advisory board</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">Risk Mitigation Framework</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-javascript">const riskMitigationStrategies = {
+  diversifiedRevenue: {
+    description: "Reduce dependency on single source",
+    implementation: "Multiple revenue streams (B2C, B2B, partnerships)",
+    timeline: "Ongoing"
+  },
+  
+  strongAdvisoryBoard: {
+    description: "Access to expertise and network",
+    implementation: "Industry experts, scholars, business leaders",
+    timeline: "Q1 2025"
+  },
+  
+  robustTechnology: {
+    description: "Scalable, secure, and reliable platform",
+    implementation: "Cloud-native architecture, microservices",
+    timeline: "Built-in from launch"
+  },
+  
+  financialControls: {
+    description: "Conservative cash management",
+    implementation: "Regular reviews, scenario planning",
+    timeline: "Monthly"
+  },
+  
+  insuranceCoverage: {
+    description: "Professional indemnity, cyber, and D&O insurance",
+    implementation: "Comprehensive coverage with top-tier providers",
+    timeline: "Before launch"
+  }
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Risk Assessment Matrix</h3>
+                    
+                    <div class="data-table">
+                        <div class="table-row table-header" style="grid-template-columns: 2fr 1fr 1fr 2fr;">
+                            <div>Risk Category</div>
+                            <div>Probability</div>
+                            <div>Impact</div>
+                            <div>Mitigation Strategy</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 2fr 1fr 1fr 2fr;">
+                            <div>Integration Complexity</div>
+                            <div><span style="background: var(--accent-gold); color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">Medium</span></div>
+                            <div><span style="background: #ef4444; color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">High</span></div>
+                            <div>Phased integration approach, extensive testing</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 2fr 1fr 1fr 2fr;">
+                            <div>Security Vulnerabilities</div>
+                            <div><span style="background: var(--accent-gold); color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">Medium</span></div>
+                            <div><span style="background: #7c2d12; color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">Critical</span></div>
+                            <div>Regular audits, security-first design</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 2fr 1fr 1fr 2fr;">
+                            <div>Regulatory Changes</div>
+                            <div><span style="background: var(--accent-gold); color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">Medium</span></div>
+                            <div><span style="background: #ef4444; color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">High</span></div>
+                            <div>Legal monitoring, compliance buffer</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 2fr 1fr 1fr 2fr;">
+                            <div>Key Personnel Departure</div>
+                            <div><span style="background: var(--accent-gold); color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">Medium</span></div>
+                            <div><span style="background: #ef4444; color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">High</span></div>
+                            <div>Knowledge documentation, succession planning</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 2fr 1fr 1fr 2fr;">
+                            <div>Economic Downturn</div>
+                            <div><span style="background: var(--success-green); color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">Low</span></div>
+                            <div><span style="background: #ef4444; color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">High</span></div>
+                            <div>Diverse revenue streams, cost flexibility</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">£300K</div>
+                        <div class="metric-label">Risk Contingency Budget</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">Quarterly</div>
+                        <div class="metric-label">Risk Review Cycle</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">5 Layers</div>
+                        <div class="metric-label">Security Defense Depth</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">99.9%</div>
+                        <div class="metric-label">Uptime Target</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Growth Strategy Section -->
+            <section id="growth" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Growth Strategy</h1>
+                    <p class="section-subtitle">Strategic roadmap for scaling and international expansion</p>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Expansion Roadmap</h3>
+                    
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-flag"></i> Phase 1: UK Market Leadership (Years 1-2)</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li>Establish dominant position in UK Islamic finance education</li>
+                                <li>Build network of 50+ certified coaches</li>
+                                <li>Achieve 10,000+ individual users and 50+ corporate clients</li>
+                                <li>Develop comprehensive content library with scholar validation</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-globe-europe"></i> Phase 2: European Expansion (Years 2-3)</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li>Launch in Germany, France, and Netherlands</li>
+                                <li>Localize content for different Islamic communities</li>
+                                <li>Establish partnerships with European Islamic organizations</li>
+                                <li>Adapt to local regulatory requirements</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-globe"></i> Phase 3: Global Platform (Years 3-5)</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li>Expand to US, Canada, and Australia markets</li>
+                                <li>Develop region-specific compliance and content</li>
+                                <li>Build international coach certification program</li>
+                                <li>Establish global Islamic finance education standard</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <h3 class="card-title">Product Innovation</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Mobile App Development:</strong> Native iOS and Android applications</li>
+                            <li><strong>AI-Powered Recommendations:</strong> Personalized investment suggestions</li>
+                            <li><strong>Blockchain Integration:</strong> Transparent Shariah compliance tracking</li>
+                            <li><strong>VR/AR Training:</strong> Immersive investment simulation experiences</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-handshake"></i>
+                            </div>
+                            <h3 class="card-title">Partnership Development</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Islamic Banks:</strong> Content licensing and customer referrals</li>
+                            <li><strong>Fintech Companies:</strong> API integrations and co-marketing</li>
+                            <li><strong>Educational Institutions:</strong> Curriculum licensing and student programs</li>
+                            <li><strong>Corporate Benefits Platforms:</strong> Integration with existing HR systems</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h3 class="card-title">Market Development</h3>
+                        </div>
+                        <ul>
+                            <li><strong>New Customer Segments:</strong> Students, retirees, high-net-worth individuals</li>
+                            <li><strong>Adjacent Markets:</strong> Islamic business finance, Waqf management</li>
+                            <li><strong>B2B2C Opportunities:</strong> White-label solutions for financial advisors</li>
+                            <li><strong>Government Partnerships:</strong> Financial literacy programs</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <h3 class="card-title">Success Metrics</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Market Share:</strong> 25% of UK Islamic finance education market by Year 3</li>
+                            <li><strong>User Growth:</strong> 100,000+ registered users globally by Year 5</li>
+                            <li><strong>Revenue Growth:</strong> £15M+ annual recurring revenue by Year 5</li>
+                            <li><strong>Geographic Expansion:</strong> Present in 10+ countries by Year 5</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="progress-section">
+                    <h3 style="margin-bottom: 1.5rem;">Growth Milestones</h3>
+                    
+                    <div class="progress-item">
+                        <strong style="min-width: 120px;">Year 1 Targets:</strong>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 25%;"></div>
+                        </div>
+                        <span>1,000+ users, £300K ARR, UK market leadership</span>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <strong style="min-width: 120px;">Year 3 Targets:</strong>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 60%;"></div>
+                        </div>
+                        <span>15,000+ users, £2.4M ARR, 3 international markets</span>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <strong style="min-width: 120px;">Year 5 Targets:</strong>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                        <span>100,000+ users, £15M ARR, global platform recognition</span>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">Technology Evolution Roadmap</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-javascript">const technologyEvolution = {
+  currentStack2025: {
+    frontend: "React 18 + TypeScript",
+    backend: "Node.js + Express",
+    database: "PostgreSQL + MongoDB",
+    infrastructure: "AWS + Kubernetes",
+    mobile: "React Native"
+  },
+  
+  enhancedStack2026: {
+    frontend: "React 18 + Next.js 14",
+    backend: "Node.js + NestJS + GraphQL",
+    database: "PostgreSQL + MongoDB + Redis",
+    infrastructure: "AWS + Serverless",
+    mobile: "React Native + Expo",
+    aiMl: "Python + TensorFlow"
+  },
+  
+  futureStack2027: {
+    frontend: "React 19 + Next.js 15",
+    backend: "Microservices + GraphQL Federation",
+    database: "Multi-region PostgreSQL + Vector DB",
+    infrastructure: "Multi-cloud + Edge Computing",
+    mobile: "React Native + Web Assembly",
+    aiMl: "Custom ML Models + GPT Integration",
+    blockchain: "Ethereum + Polygon"
+  }
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">International Market Strategy</h3>
+                    
+                    <div class="data-table">
+                        <div class="table-row table-header" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
+                            <div>Market</div>
+                            <div>Timeline</div>
+                            <div>User Target</div>
+                            <div>Revenue Target</div>
+                            <div>Entry Strategy</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
+                            <div>Germany</div>
+                            <div>Q4 2025</div>
+                            <div>3,000</div>
+                            <div>£90K</div>
+                            <div>Local partnerships</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
+                            <div>France</div>
+                            <div>Q1 2026</div>
+                            <div>2,500</div>
+                            <div>£75K</div>
+                            <div>Content localization</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
+                            <div>UAE</div>
+                            <div>Q4 2026</div>
+                            <div>4,000</div>
+                            <div>£120K</div>
+                            <div>Regional hub</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
+                            <div>Malaysia</div>
+                            <div>Q2 2027</div>
+                            <div>5,000</div>
+                            <div>£100K</div>
+                            <div>Government partnership</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
+                            <div>Indonesia</div>
+                            <div>Q3 2027</div>
+                            <div>8,000</div>
+                            <div>£160K</div>
+                            <div>Educational institutions</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">10+</div>
+                        <div class="metric-label">Target Countries by 2027</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">£15M</div>
+                        <div class="metric-label">ARR Target by Year 5</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">100K+</div>
+                        <div class="metric-label">Global Users by Year 5</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">25%</div>
+                        <div class="metric-label">UK Market Share Target</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture Principles Section -->
+            <section id="principles" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Architecture Principles</h1>
+                    <p class="section-subtitle">Core principles guiding our technical architecture decisions</p>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-puzzle-piece"></i>
+                            </div>
+                            <h3 class="card-title">Microservices Architecture</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Modular Design:</strong> Independent services for each major function</li>
+                            <li><strong>Loose Coupling:</strong> Services communicate via well-defined APIs</li>
+                            <li><strong>Independent Scaling:</strong> Scale services based on demand</li>
+                            <li><strong>Technology Diversity:</strong> Choose optimal technology per service</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-cloud"></i>
+                            </div>
+                            <h3 class="card-title">Cloud-Native Design</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Containerization:</strong> Docker containers for consistent deployment</li>
+                            <li><strong>Orchestration:</strong> Kubernetes for container management</li>
+                            <li><strong>Serverless Functions:</strong> AWS Lambda for event-driven processing</li>
+                            <li><strong>Managed Services:</strong> Leverage cloud provider services</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-plug"></i>
+                            </div>
+                            <h3 class="card-title">API-First Development</h3>
+                        </div>
+                        <ul>
+                            <li><strong>RESTful APIs:</strong> Standard HTTP methods and status codes</li>
+                            <li><strong>GraphQL:</strong> Flexible data querying for mobile applications</li>
+                            <li><strong>OpenAPI Specification:</strong> Comprehensive API documentation</li>
+                            <li><strong>Versioning Strategy:</strong> Backward compatibility</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h3 class="card-title">Data-Driven Architecture</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Event Sourcing:</strong> Capture all state changes as events</li>
+                            <li><strong>CQRS Pattern:</strong> Separate read and write operations</li>
+                            <li><strong>Real-Time Processing:</strong> Stream processing for live updates</li>
+                            <li><strong>Analytics Foundation:</strong> Data warehouse for BI</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <h3 class="card-title">Security-First Design</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Zero-Trust Model:</strong> Verify every request and user</li>
+                            <li><strong>Defense in Depth:</strong> Multiple layers of security controls</li>
+                            <li><strong>Least Privilege:</strong> Minimal necessary access rights</li>
+                            <li><strong>Secure by Default:</strong> Security built into every component</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Technology Stack Section -->
+            <section id="stack" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Technology Stack</h1>
+                    <p class="section-subtitle">Comprehensive overview of our technology choices and infrastructure</p>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Frontend Technologies</h3>
+                    
+                    <div class="tech-stack-item">
+                        <div class="tech-icon">
+                            <i class="fab fa-react"></i>
+                        </div>
+                        <div>
+                            <h4>React 18 with TypeScript</h4>
+                            <p>Modern web application framework with type safety</p>
+                        </div>
+                    </div>
+
+                    <div class="tech-stack-item">
+                        <div class="tech-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div>
+                            <h4>React Native</h4>
+                            <p>Cross-platform mobile application development</p>
+                        </div>
+                    </div>
+
+                    <div class="tech-stack-item">
+                        <div class="tech-icon">
+                            <i class="fas fa-paint-brush"></i>
+                        </div>
+                        <div>
+                            <h4>Tailwind CSS + Styled Components</h4>
+                            <p>Utility-first CSS framework with component styling</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">Frontend Stack Configuration</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-javascript">// Frontend Technology Stack
+const frontendStack = {
+  webApplication: {
+    framework: "React 18 with TypeScript",
+    stateManagement: "Redux Toolkit + RTK Query",
+    styling: "Tailwind CSS + Styled Components",
+    buildTool: "Vite for fast development",
+    testing: "Jest + React Testing Library",
+    packageManager: "npm with Workspaces"
+  },
+  
+  mobileApplication: {
+    framework: "React Native with TypeScript",
+    navigation: "React Navigation 6",
+    stateManagement: "Redux Toolkit",
+    uiComponents: "NativeBase + Custom Components",
+    buildTools: "Expo Application Services",
+    testing: "Jest + Detox for E2E testing"
+  }
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Backend Technologies</h3>
+                    
+                    <div class="tech-stack-item">
+                        <div class="tech-icon">
+                            <i class="fab fa-node-js"></i>
+                        </div>
+                        <div>
+                            <h4>Node.js 18+ LTS</h4>
+                            <p>JavaScript runtime with Express.js framework</p>
+                        </div>
+                    </div>
+
+                    <div class="tech-stack-item">
+                        <div class="tech-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div>
+                            <h4>GraphQL + REST APIs</h4>
+                            <p>Apollo Server for GraphQL with RESTful endpoints</p>
+                        </div>
+                    </div>
+
+                    <div class="tech-stack-item">
+                        <div class="tech-icon">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div>
+                            <h4>JWT Authentication</h4>
+                            <p>Secure token-based authentication with refresh tokens</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">Backend Microservices Architecture</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-javascript">// Backend Microservices Configuration
+const microservices = {
+  userService: "User management and authentication",
+  contentService: "Educational content and media",
+  simulatorService: "Investment simulation logic",
+  screeningService: "Halal compliance analysis",
+  coachingService: "Session and coach management",
+  corporateService: "Enterprise features",
+  paymentService: "Billing and subscription management",
+  notificationService: "Email, SMS, push notifications"
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Database Technologies</h3>
+                    
+                    <div class="content-grid">
+                        <div class="content-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <h3 class="card-title">PostgreSQL 14+</h3>
+                            </div>
+                            <p>Primary relational database for user data, transactions, and structured information.</p>
+                        </div>
+
+                        <div class="content-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <h3 class="card-title">MongoDB 6+</h3>
+                            </div>
+                            <p>Document storage for educational content, logs, and flexible schema data.</p>
+                        </div>
+
+                        <div class="content-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                </div>
+                                <h3 class="card-title">Redis 6+</h3>
+                            </div>
+                            <p>In-memory caching and session storage for high-performance data access.</p>
+                        </div>
+
+                        <div class="content-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <h3 class="card-title">Elasticsearch 8+</h3>
+                            </div>
+                            <p>Full-text search and analytics for content discovery and business intelligence.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Infrastructure & DevOps</h3>
+                    
+                    <div class="tech-stack-item">
+                        <div class="tech-icon">
+                            <i class="fab fa-aws"></i>
+                        </div>
+                        <div>
+                            <h4>Amazon Web Services (AWS)</h4>
+                            <p>Cloud platform with EKS, RDS, S3, and comprehensive services</p>
+                        </div>
+                    </div>
+
+                    <div class="tech-stack-item">
+                        <div class="tech-icon">
+                            <i class="fas fa-shipping-fast"></i>
+                        </div>
+                        <div>
+                            <h4>Kubernetes + Docker</h4>
+                            <p>Container orchestration with EKS for scalable deployments</p>
+                        </div>
+                    </div>
+
+                    <div class="tech-stack-item">
+                        <div class="tech-icon">
+                            <i class="fab fa-github"></i>
+                        </div>
+                        <div>
+                            <h4>CI/CD Pipeline</h4>
+                            <p>GitHub Actions with AWS CodePipeline for automated deployments</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Architecture Section -->
+            <section id="architecture" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">System Architecture</h1>
+                    <p class="section-subtitle">Detailed system design and component interactions</p>
+                </div>
+
+                <div class="architecture-diagram">
+                    <h3 style="margin-bottom: 1rem;">High-Level Architecture Diagram</h3>
+                    <div class="diagram-container">
+┌─────────────────────────────────────────────────────────────┐
+│                        Load Balancer                         │
+│                     (AWS Application LB)                     │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+┌─────────────────────┴───────────────────────────────────────┐
+│                    API Gateway                               │
+│                 (AWS API Gateway)                           │
+│              Authentication & Rate Limiting                  │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+┌─────────────────────┴───────────────────────────────────────┐
+│                 Microservices Layer                         │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
+│  │ User    │ │Content  │ │Simulator│ │Screening│           │
+│  │Service  │ │Service  │ │Service  │ │Service  │           │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
+│  │Coaching │ │Corporate│ │Payment  │ │Notify   │           │
+│  │Service  │ │Service  │ │Service  │ │Service  │           │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
+└─────────────────────┬───────────────────────────────────────┘
+                      │
+┌─────────────────────┴───────────────────────────────────────┐
+│                   Data Layer                                │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
+│  │PostgreSQL│ │MongoDB  │ │ Redis   │ │Elasticsearch       │
+│  │(Primary) │ │(Content)│ │(Cache)  │ │(Search) │           │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
+└─────────────────────────────────────────────────────────────┘
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Service Communication Patterns</h3>
+                    
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-exchange-alt"></i> Synchronous Communication</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li><strong>API Calls:</strong> Direct HTTP/GraphQL requests between services</li>
+                                <li><strong>Use Cases:</strong> User authentication, real-time data queries</li>
+                                <li><strong>Implementation:</strong> Service mesh (Istio) for traffic management</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-stream"></i> Asynchronous Communication</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li><strong>Event Streaming:</strong> Kafka for decoupled service communication</li>
+                                <li><strong>Use Cases:</strong> User actions, data synchronization, notifications</li>
+                                <li><strong>Implementation:</strong> Event-driven architecture with dead letter queues</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-sync-alt"></i> Data Consistency</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li><strong>Eventual Consistency:</strong> Acceptable for most business operations</li>
+                                <li><strong>Strong Consistency:</strong> Required for financial transactions</li>
+                                <li><strong>Implementation:</strong> Saga pattern for distributed transactions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-server"></i>
+                            </div>
+                            <h3 class="card-title">Infrastructure Components</h3>
+                        </div>
+                        <ul>
+                            <li>AWS EKS for Kubernetes orchestration</li>
+                            <li>Application Load Balancer for traffic distribution</li>
+                            <li>API Gateway for request routing and authentication</li>
+                            <li>CloudFront CDN for global content delivery</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <h3 class="card-title">Service Mesh</h3>
+                        </div>
+                        <ul>
+                            <li>Istio for service-to-service communication</li>
+                            <li>Automatic load balancing and traffic management</li>
+                            <li>Security policies and mutual TLS</li>
+                            <li>Observability and distributed tracing</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Database Design Section -->
+            <section id="database" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Database Design</h1>
+                    <p class="section-subtitle">Comprehensive data architecture and schema design</p>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">User Management Schema (PostgreSQL)</h3>
+                    
+                    <div class="schema-table">
+                        <div class="schema-header">Users Table</div>
+                        <div class="schema-row" style="font-weight: bold; background: var(--light-blue);">
+                            <div>Column</div>
+                            <div>Type</div>
+                            <div>Constraints</div>
+                            <div>Description</div>
+                        </div>
+                        <div class="schema-row">
+                            <div>id</div>
+                            <div>UUID</div>
+                            <div>PRIMARY KEY</div>
+                            <div>Unique user identifier</div>
+                        </div>
+                        <div class="schema-row">
+                            <div>email</div>
+                            <div>VARCHAR(255)</div>
+                            <div>UNIQUE NOT NULL</div>
+                            <div>User email address</div>
+                        </div>
+                        <div class="schema-row">
+                            <div>password_hash</div>
+                            <div>VARCHAR(255)</div>
+                            <div>NOT NULL</div>
+                            <div>Encrypted password</div>
+                        </div>
+                        <div class="schema-row">
+                            <div>first_name</div>
+                            <div>VARCHAR(100)</div>
+                            <div>NOT NULL</div>
+                            <div>User first name</div>
+                        </div>
+                        <div class="schema-row">
+                            <div>subscription_tier</div>
+                            <div>VARCHAR(20)</div>
+                            <div>DEFAULT 'free'</div>
+                            <div>Subscription level</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">User Management SQL Schema</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-sql">-- Users table
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    date_of_birth DATE,
+    country VARCHAR(2),
+    is_verified BOOLEAN DEFAULT FALSE,
+    subscription_tier VARCHAR(20) DEFAULT 'free',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User profiles
+CREATE TABLE user_profiles (
+    user_id UUID PRIMARY KEY REFERENCES users(id),
+    knowledge_level VARCHAR(20),
+    investment_goals TEXT[],
+    risk_tolerance VARCHAR(20),
+    monthly_budget DECIMAL(10,2),
+    shariah_compliance_level VARCHAR(20),
+    coaching_frequency VARCHAR(20),
+    communication_preferences TEXT[],
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);</code></pre>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Investment Data Schema</h3>
+                    
+                    <div class="schema-table">
+                        <div class="schema-header">Securities Table</div>
+                        <div class="schema-row" style="font-weight: bold; background: var(--light-blue);">
+                            <div>Column</div>
+                            <div>Type</div>
+                            <div>Constraints</div>
+                            <div>Description</div>
+                        </div>
+                        <div class="schema-row">
+                            <div>id</div>
+                            <div>UUID</div>
+                            <div>PRIMARY KEY</div>
+                            <div>Security identifier</div>
+                        </div>
+                        <div class="schema-row">
+                            <div>symbol</div>
+                            <div>VARCHAR(10)</div>
+                            <div>UNIQUE NOT NULL</div>
+                            <div>Stock symbol</div>
+                        </div>
+                        <div class="schema-row">
+                            <div>name</div>
+                            <div>VARCHAR(255)</div>
+                            <div>NOT NULL</div>
+                            <div>Company name</div>
+                        </div>
+                        <div class="schema-row">
+                            <div>market_cap</div>
+                            <div>BIGINT</div>
+                            <div></div>
+                            <div>Market capitalization</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Content Management (MongoDB)</h3>
+                    
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span class="code-title">Educational Content Schema</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-javascript">// Educational content collection
+{
+  _id: ObjectId,
+  title: String,
+  content_type: String, // 'video', 'article', 'quiz', 'course'
+  description: String,
+  content_url: String,
+  thumbnail_url: String,
+  duration_minutes: Number,
+  difficulty_level: String, // 'beginner', 'intermediate', 'advanced'
+  tags: [String],
+  islamic_topics: [String],
+  author: {
+    name: String,
+    credentials: String,
+    bio: String
+  },
+  learning_objectives: [String],
+  prerequisites: [String],
+  is_premium: Boolean,
+  view_count: Number,
+  rating: Number,
+  reviews: [{
+    user_id: String,
+    rating: Number,
+    comment: String,
+    created_at: Date
+  }],
+  created_at: Date,
+  updated_at: Date
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Caching Strategy (Redis)</h3>
+                    
+                    <div class="content-grid">
+                        <div class="content-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-user-check"></i>
+                                </div>
+                                <h3 class="card-title">Session Storage</h3>
+                            </div>
+                            <code>session:{session_id} → {user_data, expires_at}</code>
+                        </div>
+
+                        <div class="content-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h3 class="card-title">Market Data Cache</h3>
+                            </div>
+                            <code>market:price:{symbol} → {price, change, last_updated}</code>
+                        </div>
+
+                        <div class="content-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <h3 class="card-title">Search Results</h3>
+                            </div>
+                            <code>search:{query_hash} → {results, cached_at}</code>
+                        </div>
+
+                        <div class="content-card">
+                            <div class="card-header">
+                                <div class="card-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <h3 class="card-title">Rate Limiting</h3>
+                            </div>
+                            <code>rate_limit:{user_id}:{endpoint} → {count, expires_at}</code>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API Design Section -->
+            <section id="api" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">API Design</h1>
+                    <p class="section-subtitle">RESTful APIs and GraphQL schema design</p>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">RESTful API Endpoints</h3>
+                    
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-user-shield"></i> Authentication & User Management</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <div class="data-table">
+                                <div class="table-row table-header" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div>Method</div>
+                                    <div>Endpoint</div>
+                                    <div>Description</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div><span style="background: var(--success-green); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">POST</span></div>
+                                    <div>/api/auth/register</div>
+                                    <div>User registration</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div><span style="background: var(--success-green); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">POST</span></div>
+                                    <div>/api/auth/login</div>
+                                    <div>User login</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div><span style="background: var(--primary-blue); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">GET</span></div>
+                                    <div>/api/users/profile</div>
+                                    <div>Get user profile</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div><span style="background: var(--accent-gold); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">PUT</span></div>
+                                    <div>/api/users/profile</div>
+                                    <div>Update user profile</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-graduation-cap"></i> Educational Content</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <div class="data-table">
+                                <div class="table-row table-header" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div>Method</div>
+                                    <div>Endpoint</div>
+                                    <div>Description</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div><span style="background: var(--primary-blue); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">GET</span></div>
+                                    <div>/api/content</div>
+                                    <div>List educational content</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div><span style="background: var(--primary-blue); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">GET</span></div>
+                                    <div>/api/content/{id}</div>
+                                    <div>Get specific content</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div><span style="background: var(--success-green); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">POST</span></div>
+                                    <div>/api/content/{id}/progress</div>
+                                    <div>Update progress</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-chart-line"></i> Investment Simulator</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <div class="data-table">
+                                <div class="table-row table-header" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div>Method</div>
+                                    <div>Endpoint</div>
+                                    <div>Description</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div><span style="background: var(--primary-blue); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">GET</span></div>
+                                    <div>/api/simulator/portfolios</div>
+                                    <div>List user portfolios</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div><span style="background: var(--success-green); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">POST</span></div>
+                                    <div>/api/simulator/trade</div>
+                                    <div>Execute virtual trade</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-filter"></i> Halal Screening</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <div class="data-table">
+                                <div class="table-row table-header" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div>Method</div>
+                                    <div>Endpoint</div>
+                                    <div>Description</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div><span style="background: var(--primary-blue); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">GET</span></div>
+                                    <div>/api/screening/stocks</div>
+                                    <div>List screened stocks</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 3fr;">
+                                    <div><span style="background: var(--success-green); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">POST</span></div>
+                                    <div>/api/screening/screen</div>
+                                    <div>Request stock screening</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">GraphQL Schema</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-graphql">type User {
+  id: ID!
+  email: String!
+  firstName: String!
+  lastName: String!
+  profile: UserProfile
+  subscriptionTier: SubscriptionTier!
+  portfolios: [VirtualPortfolio!]!
+  coachingSessions: [CoachingSession!]!
+}
+
+type UserProfile {
+  knowledgeLevel: KnowledgeLevel!
+  investmentGoals: [InvestmentGoal!]!
+  riskTolerance: RiskTolerance!
+  monthlyBudget: Float
+  shariahComplianceLevel: ComplianceLevel!
+}
+
+type VirtualPortfolio {
+  id: ID!
+  name: String!
+  initialBalance: Float!
+  currentBalance: Float!
+  totalReturn: Float!
+  positions: [Position!]!
+  transactions: [Transaction!]!
+}
+
+type Stock {
+  id: ID!
+  symbol: String!
+  name: String!
+  currentPrice: Float!
+  change: Float!
+  changePercent: Float!
+  halalStatus: HalalStatus!
+  screeningDetails: ScreeningDetails
+}
+
+type Query {
+  me: User
+  stocks(filter: StockFilter): [Stock!]!
+  educationalContent(filter: ContentFilter): [Content!]!
+  coachingAvailability(coachId: ID!): [TimeSlot!]!
+}
+
+type Mutation {
+  login(email: String!, password: String!): AuthPayload!
+  createPortfolio(input: CreatePortfolioInput!): VirtualPortfolio!
+  executeTrade(input: TradeInput!): Transaction!
+  bookCoachingSession(input: BookSessionInput!): CoachingSession!
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">API Security & Rate Limiting</h3>
+                    
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span class="code-title">Rate Limiting Configuration</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-javascript">// Rate limiting configuration
+const rateLimits = {
+  default: { windowMs: 15 * 60 * 1000, max: 1000 }, // 1000 requests per 15 minutes
+  auth: { windowMs: 15 * 60 * 1000, max: 10 },      // 10 auth attempts per 15 minutes
+  trading: { windowMs: 60 * 1000, max: 30 },        // 30 trades per minute
+  screening: { windowMs: 60 * 1000, max: 100 }      // 100 screenings per minute
+};
+
+// JWT payload structure
+const jwtPayload = {
+  sub: 'user_id',
+  email: 'user@example.com',
+  role: 'user|coach|admin',
+  subscription: 'free|premium|coaching',
+  iat: 1234567890,
+  exp: 1234567890
+};</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security & Compliance Section -->
+            <section id="security" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Security & Compliance</h1>
+                    <p class="section-subtitle">Comprehensive security architecture and compliance framework</p>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-user-shield"></i>
+                            </div>
+                            <h3 class="card-title">Multi-Factor Authentication</h3>
+                        </div>
+                        <ul>
+                            <li><strong>SMS-based OTP:</strong> Account verification and sensitive operations</li>
+                            <li><strong>TOTP Support:</strong> Google Authenticator, Authy integration</li>
+                            <li><strong>Biometric Auth:</strong> Mobile app fingerprint/face recognition</li>
+                            <li><strong>Recovery Codes:</strong> Backup authentication method</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-users-cog"></i>
+                            </div>
+                            <h3 class="card-title">Role-Based Access Control</h3>
+                        </div>
+                        <ul>
+                            <li><strong>User:</strong> Basic profile and trading access</li>
+                            <li><strong>Coach:</strong> Client management and session tools</li>
+                            <li><strong>Admin:</strong> Full system administration</li>
+                            <li><strong>Corporate Admin:</strong> Employee management</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <h3 class="card-title">Data Encryption</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Data at Rest:</strong> AES-256 encryption for all stored data</li>
+                            <li><strong>Data in Transit:</strong> TLS 1.3 for all communications</li>
+                            <li><strong>Database Encryption:</strong> Transparent data encryption (TDE)</li>
+                            <li><strong>Field-Level:</strong> PII and financial data encryption</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <h3 class="card-title">Compliance Framework</h3>
+                        </div>
+                        <ul>
+                            <li><strong>SOC 2 Type II:</strong> Annual compliance certification</li>
+                            <li><strong>GDPR:</strong> Data protection and privacy controls</li>
+                            <li><strong>ISO 27001:</strong> Information security management</li>
+                            <li><strong>FCA Compliance:</strong> UK financial regulations</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">Security Controls Implementation</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-javascript">// Role-based permissions
+const roles = {
+  user: ['read:own_profile', 'write:own_profile', 'trade:simulator'],
+  coach: ['read:client_profiles', 'write:session_notes', 'schedule:sessions'],
+  admin: ['read:all_data', 'write:content', 'manage:users'],
+  corporate_admin: ['read:company_data', 'manage:employees']
+};
+
+// Data classification
+const dataClassification = {
+  public: ['educational_content', 'market_data'],
+  internal: ['user_preferences', 'system_logs'],
+  confidential: ['user_profiles', 'session_notes'],
+  restricted: ['payment_data', 'authentication_data']
+};
+
+// Security monitoring alerts
+const securityAlerts = {
+  authentication: {
+    failedLogins: { threshold: 5, window: '5m' },
+    unusualLocation: { enabled: true },
+    mfaFailures: { threshold: 3, window: '15m' }
+  },
+  api: {
+    rateLimitExceeded: { threshold: 100, window: '1m' },
+    unauthorizedAccess: { enabled: true },
+    dataExfiltration: { threshold: '100MB', window: '1h' }
+  }
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Infrastructure Security</h3>
+                    
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-network-wired"></i> Network Security</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li><strong>VPC Configuration:</strong> Isolated network environments</li>
+                                <li><strong>Security Groups:</strong> Strict firewall rules</li>
+                                <li><strong>WAF Protection:</strong> Web application firewall</li>
+                                <li><strong>DDoS Protection:</strong> AWS Shield Advanced</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-cube"></i> Container Security</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li><strong>Image Scanning:</strong> Vulnerability scanning for Docker images</li>
+                                <li><strong>Secrets Management:</strong> AWS Secrets Manager integration</li>
+                                <li><strong>Runtime Security:</strong> Container runtime monitoring</li>
+                                <li><strong>Policy Enforcement:</strong> Open Policy Agent (OPA) for Kubernetes</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-eye"></i> Monitoring & Incident Response</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li><strong>24/7 Monitoring:</strong> Real-time security event detection</li>
+                                <li><strong>SIEM Integration:</strong> Security information and event management</li>
+                                <li><strong>Incident Response:</strong> Automated response protocols</li>
+                                <li><strong>Forensic Capabilities:</strong> Detailed audit trails and investigation tools</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scalability & Performance Section -->
+            <section id="scalability" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Scalability & Performance</h1>
+                    <p class="section-subtitle">Horizontal scaling strategies and performance optimization</p>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">100K+</div>
+                        <div class="metric-label">Concurrent Users</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">1M+</div>
+                        <div class="metric-label">API Requests/Day</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">&lt;200ms</div>
+                        <div class="metric-label">API Response Time</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">99.99%</div>
+                        <div class="metric-label">Availability Target</div>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Horizontal Scaling Strategy</h3>
+                    
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span class="code-title">Kubernetes Auto-scaling Configuration</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-yaml">apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nisba-api-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nisba-api
+  minReplicas: 3
+  maxReplicas: 50
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h3 class="card-title">Database Scaling</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Read Replicas:</strong> PostgreSQL read replicas for query load distribution</li>
+                            <li><strong>Sharding Strategy:</strong> Horizontal partitioning by user_id</li>
+                            <li><strong>Connection Pooling:</strong> PgBouncer for connection management</li>
+                            <li><strong>Caching Layers:</strong> Redis for frequently accessed data</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            <h3 class="card-title">CDN & Edge Computing</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Global CDN:</strong> CloudFront for static content delivery</li>
+                            <li><strong>Edge Caching:</strong> Regional caching for API responses</li>
+                            <li><strong>Image Optimization:</strong> Automatic compression and format conversion</li>
+                            <li><strong>Video Streaming:</strong> Adaptive bitrate streaming</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </div>
+                            <h3 class="card-title">Performance Optimization</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Code Splitting:</strong> React.lazy() for route-based splitting</li>
+                            <li><strong>Query Optimization:</strong> Database index optimization</li>
+                            <li><strong>Async Processing:</strong> Background job processing with queues</li>
+                            <li><strong>Compression:</strong> Gzip and Brotli compression</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <h3 class="card-title">Real-Time Features</h3>
+                        </div>
+                        <ul>
+                            <li><strong>WebSocket:</strong> Real-time stock price updates</li>
+                            <li><strong>WebRTC:</strong> Peer-to-peer coaching sessions</li>
+                            <li><strong>Push Notifications:</strong> Firebase Cloud Messaging</li>
+                            <li><strong>Event Streaming:</strong> Apache Kafka for real-time data</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="progress-section">
+                    <h3 style="margin-bottom: 1.5rem;">Performance Targets Evolution</h3>
+                    
+                    <div class="progress-item">
+                        <strong style="min-width: 120px;">Page Load Time:</strong>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 75%;"></div>
+                        </div>
+                        <span>Target: &lt;1s (Current: &lt;2s)</span>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <strong style="min-width: 120px;">API Response:</strong>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 60%;"></div>
+                        </div>
+                        <span>Target: &lt;100ms (Current: &lt;200ms)</span>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <strong style="min-width: 120px;">Uptime:</strong>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 95%;"></div>
+                        </div>
+                        <span>Target: 99.99% (Current: 99.9%)</span>
+                    </div>
+                    
+                    <div class="progress-item">
+                        <strong style="min-width: 120px;">Concurrent Users:</strong>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 40%;"></div>
+                        </div>
+                        <span>Target: 100K (Current: 10K)</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Development & Deployment Section -->
+            <section id="deployment" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Development & Deployment</h1>
+                    <p class="section-subtitle">CI/CD pipeline, testing strategy, and deployment automation</p>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Development Workflow</h3>
+                    
+                    <div class="architecture-diagram">
+                        <h4 style="margin-bottom: 1rem;">Git Workflow</h4>
+                        <div class="diagram-container">
+main branch: Production-ready code
+├── develop: Integration branch for features
+├── feature/: Individual feature development
+├── release/: Release preparation and testing
+└── hotfix/: Critical bug fixes for production
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">GitHub Actions CI/CD Pipeline</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-yaml">name: NISBA CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:coverage
+      - run: npm run test:e2e
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: docker build -t nisba-api .
+      - run: docker tag nisba-api:latest $ECR_REGISTRY/nisba-api:$GITHUB_SHA
+      - run: docker push $ECR_REGISTRY/nisba-api:$GITHUB_SHA
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - run: kubectl set image deployment/nisba-api nisba-api=$ECR_REGISTRY/nisba-api:$GITHUB_SHA
+      - run: kubectl rollout status deployment/nisba-api</code></pre>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-vial"></i>
+                            </div>
+                            <h3 class="card-title">Testing Strategy</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Unit Tests:</strong> Jest + React Testing Library (90% coverage)</li>
+                            <li><strong>Integration Tests:</strong> API endpoints and database interactions</li>
+                            <li><strong>E2E Tests:</strong> Playwright for critical user journeys</li>
+                            <li><strong>Performance Tests:</strong> k6 for load and stress testing</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-layer-group"></i>
+                            </div>
+                            <h3 class="card-title">Deployment Environments</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Development:</strong> Feature development and testing</li>
+                            <li><strong>Staging:</strong> Production-like testing and QA</li>
+                            <li><strong>Production:</strong> Live user-facing environment</li>
+                            <li><strong>Rollback:</strong> Automated rollback capabilities</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-code-branch"></i>
+                            </div>
+                            <h3 class="card-title">Code Quality</h3>
+                        </div>
+                        <ul>
+                            <li><strong>ESLint:</strong> Code quality and security rules</li>
+                            <li><strong>TypeScript:</strong> Type safety across the codebase</li>
+                            <li><strong>Prettier:</strong> Consistent code formatting</li>
+                            <li><strong>SonarQube:</strong> Code quality analysis</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h3 class="card-title">Infrastructure as Code</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Terraform:</strong> Infrastructure provisioning</li>
+                            <li><strong>Kubernetes:</strong> Application deployment manifests</li>
+                            <li><strong>Helm Charts:</strong> Application packaging</li>
+                            <li><strong>GitOps:</strong> Declarative configuration management</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">Terraform Infrastructure</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-hcl"># EKS cluster
+resource "aws_eks_cluster" "nisba_cluster" {
+  name     = "nisba-${var.environment}"
+  role_arn = aws_iam_role.cluster_role.arn
+
+  vpc_config {
+    subnet_ids = aws_subnet.private[*].id
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.cluster_policy,
+    aws_iam_role_policy_attachment.vpc_resource_controller,
+  ]
+}
+
+# RDS instance
+resource "aws_db_instance" "nisba_db" {
+  identifier = "nisba-${var.environment}"
+  
+  engine         = "postgres"
+  engine_version = "14.6"
+  instance_class = "db.r6g.large"
+  
+  allocated_storage     = 100
+  max_allocated_storage = 1000
+  storage_encrypted     = true
+  
+  db_name  = "nisba"
+  username = var.db_username
+  password = var.db_password
+  
+  backup_retention_period = 7
+  backup_window          = "03:00-04:00"
+  
+  tags = {
+    Name        = "nisba-db-${var.environment}"
+    Environment = var.environment
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Monitoring & Maintenance Section -->
+            <section id="monitoring" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Monitoring & Maintenance</h1>
+                    <p class="section-subtitle">Comprehensive monitoring, alerting, and maintenance procedures</p>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <h3 class="card-title">Health Monitoring</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Service Health:</strong> /health endpoints with comprehensive checks</li>
+                            <li><strong>Database Health:</strong> Connection and query performance monitoring</li>
+                            <li><strong>External APIs:</strong> Third-party service availability tracking</li>
+                            <li><strong>Real-time Alerts:</strong> Slack and PagerDuty integration</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-chart-area"></i>
+                            </div>
+                            <h3 class="card-title">Performance Metrics</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Application Metrics:</strong> Request duration, error rates, throughput</li>
+                            <li><strong>Business Metrics:</strong> User engagement, conversion rates, revenue</li>
+                            <li><strong>Infrastructure Metrics:</strong> CPU, memory, disk, network usage</li>
+                            <li><strong>Custom Dashboards:</strong> Executive, engineering, and operations views</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-bug"></i>
+                            </div>
+                            <h3 class="card-title">Error Tracking</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Sentry Integration:</strong> Real-time error tracking and alerting</li>
+                            <li><strong>Log Aggregation:</strong> Centralized logging with ELK stack</li>
+                            <li><strong>Distributed Tracing:</strong> OpenTelemetry for request tracing</li>
+                            <li><strong>Root Cause Analysis:</strong> Automated error attribution</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h3 class="card-title">Security Monitoring</h3>
+                        </div>
+                        <ul>
+                            <li><strong>SIEM:</strong> Security information and event management</li>
+                            <li><strong>Anomaly Detection:</strong> ML-powered unusual activity detection</li>
+                            <li><strong>Compliance Monitoring:</strong> SOC 2 and GDPR compliance tracking</li>
+                            <li><strong>Vulnerability Scanning:</strong> Automated security assessments</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">Monitoring Configuration</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-javascript">// Business metrics tracking
+const businessMetrics = {
+  userEngagement: {
+    daily_active_users: 'Unique users per day',
+    session_duration: 'Average session length',
+    feature_usage: 'Feature adoption rates'
+  },
+  educational: {
+    course_completion_rate: 'Percentage of completed courses',
+    video_watch_time: 'Total video consumption',
+    quiz_success_rate: 'Assessment performance'
+  },
+  trading: {
+    trades_per_day: 'Virtual trading activity',
+    portfolio_performance: 'Average portfolio returns',
+    halal_compliance_rate: 'Percentage of halal investments'
+  },
+  coaching: {
+    session_attendance_rate: 'Coach session attendance',
+    goal_achievement_rate: 'Client goal completion',
+    coach_utilization: 'Coach capacity utilization'
+  }
+};
+
+// Alert configurations
+const alertRules = {
+  critical: {
+    error_rate: { threshold: '5%', window: '5m' },
+    response_time: { threshold: '5s', window: '1m' },
+    availability: { threshold: '99%', window: '5m' }
+  },
+  warning: {
+    error_rate: { threshold: '2%', window: '10m' },
+    response_time: { threshold: '2s', window: '5m' },
+    disk_usage: { threshold: '80%', window: '5m' }
+  }
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Backup & Disaster Recovery</h3>
+                    
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-database"></i> Database Backup Strategy</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <div class="data-table">
+                                <div class="table-row table-header" style="grid-template-columns: 1fr 1fr 1fr 2fr;">
+                                    <div>Database</div>
+                                    <div>Frequency</div>
+                                    <div>Retention</div>
+                                    <div>Strategy</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 1fr 1fr 2fr;">
+                                    <div>PostgreSQL</div>
+                                    <div>Daily full, 6h incremental</div>
+                                    <div>30 days</div>
+                                    <div>Point-in-time recovery with WAL</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 1fr 1fr 2fr;">
+                                    <div>MongoDB</div>
+                                    <div>Every 12 hours</div>
+                                    <div>30 days</div>
+                                    <div>Consistent snapshots with oplog</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 1fr 1fr 2fr;">
+                                    <div>Redis</div>
+                                    <div>Hourly RDB</div>
+                                    <div>7 days</div>
+                                    <div>AOF for durability</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-life-ring"></i> Disaster Recovery Plan</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-value">4 hours</div>
+                                    <div class="metric-label">Recovery Time Objective (RTO)</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">1 hour</div>
+                                    <div class="metric-label">Recovery Point Objective (RPO)</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">Quarterly</div>
+                                    <div class="metric-label">DR Testing Schedule</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-value">Multi-AZ</div>
+                                    <div class="metric-label">Deployment Strategy</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Maintenance Schedule</h3>
+                    
+                    <div class="data-table">
+                        <div class="table-row table-header" style="grid-template-columns: 2fr 1fr 2fr 2fr;">
+                            <div>Component</div>
+                            <div>Frequency</div>
+                            <div>Maintenance Type</div>
+                            <div>Automation Level</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 2fr 1fr 2fr 2fr;">
+                            <div>Database</div>
+                            <div>Monthly</div>
+                            <div>Security patches, index optimization</div>
+                            <div>Automated with manual approval</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 2fr 1fr 2fr 2fr;">
+                            <div>Application</div>
+                            <div>Bi-weekly</div>
+                            <div>Feature releases, dependency updates</div>
+                            <div>Fully automated</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 2fr 1fr 2fr 2fr;">
+                            <div>Infrastructure</div>
+                            <div>Quarterly</div>
+                            <div>OS patches, Kubernetes upgrades</div>
+                            <div>Blue-green deployment</div>
+                        </div>
+                        <div class="table-row" style="grid-template-columns: 2fr 1fr 2fr 2fr;">
+                            <div>SSL Certificates</div>
+                            <div>Automatic</div>
+                            <div>Certificate renewal</div>
+                            <div>Let's Encrypt automation</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Compliance & Governance Section -->
+            <section id="compliance" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Compliance & Governance</h1>
+                    <p class="section-subtitle">Regulatory compliance and data governance framework</p>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-landmark"></i>
+                            </div>
+                            <h3 class="card-title">Financial Services Compliance</h3>
+                        </div>
+                        <ul>
+                            <li><strong>FCA Compliance:</strong> UK Financial Conduct Authority requirements</li>
+                            <li><strong>Consumer Duty:</strong> Fair treatment of customers</li>
+                            <li><strong>Educational Focus:</strong> No investment advice provision</li>
+                            <li><strong>Risk Communication:</strong> Clear disclosure of risks</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-user-shield"></i>
+                            </div>
+                            <h3 class="card-title">Data Protection (GDPR)</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Lawful Basis:</strong> Contract and consent for processing</li>
+                            <li><strong>Data Subject Rights:</strong> Access, rectification, erasure, portability</li>
+                            <li><strong>Privacy by Design:</strong> Built-in privacy controls</li>
+                            <li><strong>Breach Notification:</strong> 72-hour reporting procedures</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-mosque"></i>
+                            </div>
+                            <h3 class="card-title">Shariah Compliance</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Shariah Board:</strong> Independent scholars review</li>
+                            <li><strong>AAOIFI Standards:</strong> Compliance with international standards</li>
+                            <li><strong>Audit Process:</strong> Quarterly compliance audits</li>
+                            <li><strong>Transparency:</strong> Public methodology documentation</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <h3 class="card-title">Payment Security (PCI DSS)</h3>
+                        </div>
+                        <ul>
+                            <li><strong>Third-party Processors:</strong> Stripe for secure payment processing</li>
+                            <li><strong>Encrypted Data:</strong> No storage of cardholder data</li>
+                            <li><strong>Access Controls:</strong> Restricted payment system access</li>
+                            <li><strong>Regular Testing:</strong> Quarterly security assessments</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="interactive-section">
+                    <h3 style="margin-bottom: 1.5rem;">Data Governance Framework</h3>
+                    
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-tags"></i> Data Classification</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <div class="data-table">
+                                <div class="table-row table-header" style="grid-template-columns: 1fr 2fr 2fr;">
+                                    <div>Classification</div>
+                                    <div>Examples</div>
+                                    <div>Protection Measures</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 2fr;">
+                                    <div><span style="background: var(--success-green); color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">Public</span></div>
+                                    <div>Educational content, Market data</div>
+                                    <div>Standard web security</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 2fr;">
+                                    <div><span style="background: var(--accent-gold); color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">Internal</span></div>
+                                    <div>System logs, Analytics data</div>
+                                    <div>Access controls, encryption</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 2fr;">
+                                    <div><span style="background: #ef4444; color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">Confidential</span></div>
+                                    <div>User profiles, Session notes</div>
+                                    <div>Encryption, audit logging</div>
+                                </div>
+                                <div class="table-row" style="grid-template-columns: 1fr 2fr 2fr;">
+                                    <div><span style="background: #7c2d12; color: white; padding: 0.2rem 0.5rem; border-radius: 4px;">Restricted</span></div>
+                                    <div>Payment data, Authentication</div>
+                                    <div>Enhanced encryption, strict access</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-user-check"></i> Privacy Controls</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li><strong>Consent Management:</strong> Granular, purpose-specific consent with easy withdrawal</li>
+                                <li><strong>Data Minimization:</strong> Collect only necessary data for stated purposes</li>
+                                <li><strong>Retention Policies:</strong> Automated deletion when no longer needed</li>
+                                <li><strong>Subject Rights:</strong> Automated data export and self-service updates</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="toggle-section">
+                        <div class="toggle-header" onclick="toggleContent(this)">
+                            <span><i class="fas fa-gavel"></i> Regulatory Monitoring</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="toggle-content">
+                            <ul>
+                                <li><strong>Legal Updates:</strong> Continuous monitoring of regulatory changes</li>
+                                <li><strong>Compliance Dashboard:</strong> Real-time compliance status tracking</li>
+                                <li><strong>Audit Trails:</strong> Comprehensive logging for regulatory reporting</li>
+                                <li><strong>Training Programs:</strong> Regular staff compliance training</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-title">Shariah Compliance Implementation</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-javascript">const shariahCompliance = {
+  governance: {
+    shariahBoard: 'Independent scholars review',
+    auditProcess: 'Quarterly compliance audits',
+    certification: 'AAOIFI standards compliance'
+  },
+  
+  screening: {
+    businessActivity: 'Exclude haram industries',
+    financialRatios: 'Debt and interest thresholds',
+    purification: 'Charity calculation for mixed income'
+  },
+  
+  methodology: {
+    standards: 'AAOIFI Shariah Standards',
+    scholars: 'Qualified Islamic finance experts',
+    transparency: 'Public methodology documentation'
+  }
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">100%</div>
+                        <div class="metric-label">Scholar Validated Content</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">GDPR</div>
+                        <div class="metric-label">Privacy Compliant</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">SOC 2</div>
+                        <div class="metric-label">Security Certified</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">AAOIFI</div>
+                        <div class="metric-label">Shariah Standards</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loading State -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading section...</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Global state
+        let currentSection = 'overview';
+        let searchIndex = [];
+
+        // Navigation functions
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show loading
+            showLoading();
+            
+            // Simulate loading delay for better UX
+            setTimeout(() => {
+                // Hide loading
+                hideLoading();
+                
+                // Show target section
+                const targetSection = document.getElementById(sectionId);
+                targetSection.classList.add('active');
+                currentSection = sectionId;
+                
+                // Update navigation
+                updateNavigation(sectionId);
+                
+                // Scroll to the very top of the section with the header visible
+                // Calculate the offset to account for the fixed header
+                const headerHeight = document.querySelector('.header').offsetHeight;
+                const sectionTop = targetSection.offsetTop;
+                const scrollPosition = sectionTop - headerHeight - 20; // 20px extra padding
+                
+                window.scrollTo({
+                    top: Math.max(0, scrollPosition),
+                    behavior: 'smooth'
+                });
+                
+                // Update URL hash
+                window.location.hash = sectionId;
+            }, 300);
+        }
+
+        function updateNavigation(sectionId) {
+            // Update TOC links
+            document.querySelectorAll('.toc-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Find and activate current section in TOC
+            const targetLink = Array.from(document.querySelectorAll('.toc-link')).find(link => 
+                link.onclick.toString().includes(sectionId)
+            );
+            
+            if (targetLink) targetLink.classList.add('active');
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Sidebar toggle for mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('mobile-open');
+        }
+
+        // Code copying functionality
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-container').querySelector('code');
+            const text = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                button.textContent = 'Copied!';
+                button.style.background = 'var(--success-green)';
+                
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                    button.style.background = 'var(--accent-gold)';
+                }, 2000);
+            }).catch(() => {
+                button.textContent = 'Copy failed';
+                setTimeout(() => {
+                    button.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Toggle content functionality
+        function toggleContent(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.fa-chevron-down, .fa-chevron-up');
+            
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                icon.className = 'fas fa-chevron-down';
+                header.style.background = 'var(--light-blue)';
+                header.style.color = '';
+            } else {
+                content.classList.add('active');
+                icon.className = 'fas fa-chevron-up';
+                header.style.background = 'var(--primary-blue)';
+                header.style.color = 'white';
+            }
+        }
+
+        // Search functionality
+        function initializeSearch() {
+            const searchInput = document.getElementById('searchInput');
+            
+            // Build search index
+            document.querySelectorAll('.section').forEach(section => {
+                const title = section.querySelector('.section-title')?.textContent || '';
+                const content = section.textContent.toLowerCase();
+                
+                searchIndex.push({
+                    id: section.id,
+                    title: title,
+                    content: content
+                });
+            });
+            
+            // Add search event listener
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                if (query.length > 2) {
+                    performSearch(query);
+                }
+            });
+        }
+
+        function performSearch(query) {
+            const results = searchIndex.filter(item => 
+                item.content.includes(query) || 
+                item.title.toLowerCase().includes(query)
+            );
+            
+            // Highlight search results in TOC
+            document.querySelectorAll('.toc-link').forEach(link => {
+                link.style.background = '';
+                link.style.fontWeight = '';
+            });
+            
+            results.forEach(result => {
+                const tocLink = document.querySelector(`[onclick*="${result.id}"]`);
+                if (tocLink) {
+                    tocLink.style.background = 'var(--accent-gold)';
+                    tocLink.style.fontWeight = 'bold';
+                    tocLink.style.color = 'white';
+                }
+            });
+        }
+
+        // Keyboard navigation
+        function initializeKeyboardNavigation() {
+            document.addEventListener('keydown', (e) => {
+                // Arrow key navigation
+                if (e.altKey) {
+                    // Update navigation
+            const sections = ['overview', 'principles', 'stack', 'architecture', 'database', 'api', 'security', 'scalability', 'deployment', 'monitoring', 'compliance', 'risk', 'growth', 'best-practices', 'conclusion'];
+                    const currentIndex = sections.indexOf(currentSection);
+                    
+                    if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                        showSection(sections[currentIndex - 1]);
+                        e.preventDefault();
+                    } else if (e.key === 'ArrowRight' && currentIndex < sections.length - 1) {
+                        showSection(sections[currentIndex + 1]);
+                        e.preventDefault();
+                    }
+                }
+                
+                // Search shortcut
+                if (e.ctrlKey && e.key === 'f') {
+                    document.getElementById('searchInput').focus();
+                    e.preventDefault();
+                }
+                
+                // Escape to close mobile sidebar
+                if (e.key === 'Escape') {
+                    document.getElementById('sidebar').classList.remove('mobile-open');
+                }
+            });
+        }
+
+        // Responsive handling
+        function handleResize() {
+            if (window.innerWidth > 768) {
+                document.getElementById('sidebar').classList.remove('mobile-open');
+            }
+        }
+
+        // Auto-scroll for long content and hash navigation
+        function autoScrollToSection() {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById(hash)) {
+                // Small delay to ensure the page is fully loaded
+                setTimeout(() => {
+                    showSection(hash);
+                }, 100);
+            }
+        }
+
+        // Smooth scroll behavior for anchor links
+        function scrollToSection(sectionId) {
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                const headerHeight = document.querySelector('.header').offsetHeight;
+                const sectionTop = targetSection.offsetTop;
+                const scrollPosition = sectionTop - headerHeight - 20;
+                
+                window.scrollTo({
+                    top: Math.max(0, scrollPosition),
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeSearch();
+            initializeKeyboardNavigation();
+            autoScrollToSection();
+            
+            // Add resize listener
+            window.addEventListener('resize', handleResize);
+            
+            // Add smooth scrolling for better UX
+            document.documentElement.style.scrollBehavior = 'smooth';
+            
+            // Initialize syntax highlighting
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightAll();
+            }
+            
+            // Show initial loading state
+            hideLoading();
+            
+            // Add intersection observer for automatic section highlighting
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const sectionId = entry.target.id;
+                        if (sectionId !== currentSection) {
+                            updateNavigation(sectionId);
+                            currentSection = sectionId;
+                        }
+                    }
+                });
+            }, { 
+                threshold: 0.3,
+                rootMargin: '-80px 0px -60% 0px' // Account for header and ensure section title is visible
+            });
+            
+            document.querySelectorAll('.section').forEach(section => {
+                observer.observe(section);
+            });
+
+            // Close mobile sidebar when clicking anywhere outside
+            document.addEventListener('click', (e) => {
+                const sidebar = document.getElementById('sidebar');
+                const mobileBtn = document.querySelector('.mobile-menu-btn');
+                
+                if (window.innerWidth <= 768 && 
+                    sidebar.classList.contains('mobile-open') && 
+                    !sidebar.contains(e.target) && 
+                    !mobileBtn.contains(e.target)) {
+                    sidebar.classList.remove('mobile-open');
+                }
+            });
+        });
+
+        // Print functionality
+        function printDocument() {
+            window.print();
+        }
+
+        // Export functionality (placeholder)
+        function exportToPDF() {
+            alert('PDF export functionality would be implemented here using libraries like jsPDF or server-side generation.');
+        }
+
+        // Additional initialization can be added here if needed
+        console.log('NISBA Technical Architecture Document loaded successfully');
+    </script>
+</body>
+</html>
