@@ -2144,18 +2144,18 @@ const advancedTestingStrategy = {
                     </h2>
                     <div class="architecture-diagram">
 ┌─────────────────────────────────────────────────────────────┐
-│                        Load Balancer                         │
-│                     (AWS Application LB)                     │
+│                        Load Balancer                        │
+│                     (AWS Application LB)                    │
 └─────────────────────┬───────────────────────────────────────┘
                       │
 ┌─────────────────────┴───────────────────────────────────────┐
-│                    API Gateway                               │
+│                    API Gateway                              │
 │                 (AWS API Gateway)                           │
-│              Authentication & Rate Limiting                  │
+│              Authentication & Rate Limiting                 │
 └─────────────────────┬───────────────────────────────────────┘
                       │
-┌─────────────────────┴───────────────────────────────────────┐
-│                 Microservices Layer                         │
+┌─────────────────────┴──────────────────────────────────────┐
+│                 Microservices Layer                        │
 │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
 │  │ User    │ │Content  │ │Simulator│ │Screening│           │
 │  │Service  │ │Service  │ │Service  │ │Service  │           │
@@ -2164,14 +2164,14 @@ const advancedTestingStrategy = {
 │  │Coaching │ │Corporate│ │Payment  │ │Notify   │           │
 │  │Service  │ │Service  │ │Service  │ │Service  │           │
 │  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
-└─────────────────────┬───────────────────────────────────────┘
+└─────────────────────┬──────────────────────────────────────┘
                       │
 ┌─────────────────────┴───────────────────────────────────────┐
 │                   Data Layer                                │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
-│  │PostgreSQL│ │MongoDB  │ │ Redis   │ │Elasticsearch       │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐            │
+│  │PostgreSQL│ │MongoDB  │ │ Redis   │ │Elasticsearch        │
 │  │(Primary) │ │(Content)│ │(Cache)  │ │(Search) │           │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘            │
 └─────────────────────────────────────────────────────────────┘
                     </div>
                 </div>
