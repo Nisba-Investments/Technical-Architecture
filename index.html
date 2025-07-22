@@ -2140,43 +2140,85 @@ const advancedTestingStrategy = {
 
                 <div class="section">
                     <h2 class="section-title">
-                        <i class="fas fa-project-diagram"></i>  <h2>High-Level Architecture Diagram</h2>
-        <div class="architecture-diagram">┌─────────────────────────────────────────────────────────────┐
-│                        Load Balancer                        │
-│                     (AWS Application LB)                    │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-┌─────────────────────┴───────────────────────────────────────┐
-│                    API Gateway                              │
-│                 (AWS API Gateway)                           │
-│              Authentication & Rate Limiting                 │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-┌─────────────────────┴──────────────────────────────────────┐
-│                 Microservices Layer                        │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
-│  │ User    │ │Content  │ │Simulator│ │Screening│           │
-│  │Service  │ │Service  │ │Service  │ │Service  │           │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
-│  │Coaching │ │Corporate│ │Payment  │ │Notify   │           │
-│  │Service  │ │Service  │ │Service  │ │Service  │           │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
-└─────────────────────┬──────────────────────────────────────┘
-                      │
-┌─────────────────────┴───────────────────────────────────────┐
-│                   Data Layer                                │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐            │
-│  │PostgreSQL│ │MongoDB  │ │ Redis   │ │Elasticsearch        │
-│  │(Primary) │ │(Content)│ │(Cache)  │ │(Search) │           │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘            │
-└─────────────────────────────────────────────────────────────┘</div>
-    </div>
-</body>
-</html>
-                <div class="section">
-                    <h2 class="section-title">
-                        <i class="fas fa-exchange-alt"></i> Service Communication Patterns
+                       <i class="fas fa-project-diagram"></i> High-Level Architecture Diagram
+                    </h2>
+                    <div class="architecture-diagram">
+<pre>
+┌──────────────────────────────────────────────────────────────────────┐
+│                            CLIENT LAYER                              │
+├────────────────┬─────────────────┬───────────────────────────────────┤
+│   Web App      │   Mobile App    │       Corporate Portal            │
+│   (React)      │ (React Native)  │        (React)                    │
+└────────────────┴─────────────────┴───────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                         LOAD BALANCER                                │
+│                      (AWS Application LB)                            │
+│                     SSL Termination                                  │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                         API GATEWAY                                  │
+│                      (AWS API Gateway)                               │
+│             Authentication • Rate Limiting • CORS                    │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                      MICROSERVICES LAYER                             │
+│                                                                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐             │
+│  │   User   │  │ Content  │  │Simulator │  │Screening │             │
+│  │ Service  │  │ Service  │  │ Service  │  │ Service  │             │
+│  │          │  │          │  │          │  │          │             │
+│  │ • Auth   │  │ • Videos │  │ • Trade  │  │ • Halal  │             │
+│  │ • Profile│  │ • Courses│  │ • Portfolio│ • Analysis│             │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘             │
+│                                                                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐             │
+│  │ Coaching │  │Corporate │  │ Payment  │  │ Notify   │             │
+│  │ Service  │  │ Service  │  │ Service  │  │ Service  │             │
+│  │          │  │          │  │          │  │          │             │
+│  │ • Sessions│ • Employee │  │ • Billing│  │ • Email  │             │
+│  │ • Schedule│ • Analytics│  │ • Stripe │  │ • SMS    │             │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘             │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                          DATA LAYER                                  │
+│                                                                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐             │
+│  │PostgreSQL│  │ MongoDB  │  │  Redis   │  │Elasticsearch          │
+│  │          │  │          │  │          │  │          │             │
+│  │ • Users  │  │ • Content│  │ • Cache  │  │ • Search │             │
+│  │ • Trading│  │ • Logs   │  │ • Session│  │ • Analytics             │
+│  │ • Finance│  │ • CMS    │  │ • Queue  │  │ • Monitoring             │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘             │
+└──────────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                      EXTERNAL SERVICES                               │
+│                                                                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐             │
+│  │Financial │  │  AWS S3  │  │ Stripe   │  │ SendGrid │             │
+│  │Data APIs │  │  Media   │  │ Payments │  │  Email   │             │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘             │
+└──────────────────────────────────────────────────────────────────────┘
+
+Key:
+┌─┐ = System Component
+│ │ = Contains functionality
+▼   = Data/Request flow direction
+•   = Specific features/responsibilities
+</pre>
+                    </div>
+                </div>
+
+                <div class="section">                        <i class="fas fa-exchange-alt"></i> Service Communication Patterns
                     </h2>
                     
                     <h3 style="color: var(--primary-blue); margin: 2rem 0 1rem 0;">1. Synchronous Communication</h3>
